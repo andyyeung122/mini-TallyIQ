@@ -331,7 +331,7 @@ function PaymentForm({ invoice }: { invoice: Invoice }) {
 function PdfPreview({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const filename = `INV-${String(invoice.id).padStart(6, "0")}${invoice.status === "posted" ? "" : "-draft"}.pdf`;
   const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState<unknown>(null);
+  const [error, setError] = useState<Error | null>(null);
   useEffect(() => {
     // Fetch with the auth header, show it from a blob URL, and free the URL on close.
     let alive = true;
@@ -342,7 +342,7 @@ function PdfPreview({ invoice, onClose }: { invoice: Invoice; onClose: () => voi
         if (alive) setUrl(objectUrl);
         else URL.revokeObjectURL(objectUrl);
       })
-      .catch((e) => alive && setError(e));
+      .catch((e) => alive && setError(e instanceof Error ? e : new Error(String(e))));
     return () => {
       alive = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -364,7 +364,7 @@ function PdfPreview({ invoice, onClose }: { invoice: Invoice; onClose: () => voi
             <button className="secondary-neutral small" onClick={onClose} autoFocus>Close</button>
           </span>
         </div>
-        {error && <p className="error">{(error as Error).message}</p>}
+        {error && <p className="error">{error.message}</p>}
         {url ? <iframe title={filename} src={url} /> : !error && <p className="muted">Rendering…</p>}
       </div>
     </div>
